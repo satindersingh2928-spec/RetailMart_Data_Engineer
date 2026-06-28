@@ -2,7 +2,7 @@
 # RetailMart Data Engineering Project
 # Author : Satinder Singh
 # Description:
-# Data Ingestion and Data Cleaning Pipeline
+# Data Ingestion, Data Cleaning and Data Transformation
 # ==========================================================
 
 # ==========================================================
@@ -12,112 +12,224 @@
 import pandas as pd
 import numpy as np
 
+# Display all columns in output
+pd.set_option("display.max_columns", None)
+pd.set_option("display.width", None)
 
 # ==========================================================
-# Data Ingestion
+# Configuration
 # ==========================================================
 
-print("=" * 60)
-print("RETAILMART DATA PIPELINE")
-print("=" * 60)
+DATA_FOLDER = "data"
 
-print("\nLoading CSV Files...\n")
-
-sales_df = pd.read_csv("data/sales_data.csv")
-products_df = pd.read_csv("data/products.csv")
-stores_df = pd.read_csv("data/stores.csv")
-
-print("✅ All CSV files loaded successfully.")
 
 # ==========================================================
-# Dataset Information
+# Load Data
 # ==========================================================
 
-print("\n" + "=" * 60)
-print("DATASET SHAPES")
-print("=" * 60)
+def load_data():
+    """
+    Load all CSV files into Pandas DataFrames.
+    """
 
-print(f"Sales Data    : {sales_df.shape}")
-print(f"Products Data : {products_df.shape}")
-print(f"Stores Data   : {stores_df.shape}")
+    print("=" * 60)
+    print("LOADING DATA")
+    print("=" * 60)
 
-print("\n" + "=" * 60)
-print("FIRST 5 ROWS OF SALES DATA")
-print("=" * 60)
+    sales_df = pd.read_csv(f"{DATA_FOLDER}/sales_data.csv")
+    products_df = pd.read_csv(f"{DATA_FOLDER}/products.csv")
+    stores_df = pd.read_csv(f"{DATA_FOLDER}/stores.csv")
 
-print(sales_df.head())
+    print("All CSV files loaded successfully.\n")
 
-# ==========================================================
-# Missing Values Summary
-# ==========================================================
+    print("Dataset Shapes")
+    print("-" * 60)
+    print(f"Sales Data    : {sales_df.shape}")
+    print(f"Products Data : {products_df.shape}")
+    print(f"Stores Data   : {stores_df.shape}")
 
-print("\n" + "=" * 60)
-print("MISSING VALUES SUMMARY")
-print("=" * 60)
+    return sales_df, products_df, stores_df
 
-print("\nSales Data")
-print(sales_df.isnull().sum())
-
-print("\nProducts Data")
-print(products_df.isnull().sum())
-
-print("\nStores Data")
-print(stores_df.isnull().sum())
 
 # ==========================================================
 # Data Cleaning
 # ==========================================================
 
-print("\n" + "=" * 60)
-print("DATA CLEANING")
-print("=" * 60)
+def clean_data(sales_df):
 
-# Count duplicate rows
-duplicate_count = sales_df.duplicated().sum()
+    print("\n" + "=" * 60)
+    print("DATA CLEANING")
+    print("=" * 60)
 
-print(f"\nDuplicate Rows Found : {duplicate_count}")
+    # Duplicate rows
+    duplicate_count = sales_df.duplicated().sum()
 
-# Remove duplicate rows
-sales_df = sales_df.drop_duplicates()
+    print(f"Duplicate Rows Found : {duplicate_count}")
 
-print("Duplicate rows removed successfully.")
+    sales_df = sales_df.drop_duplicates()
 
-# Fill missing quantity with 0
-sales_df["quantity"] = sales_df["quantity"].fillna(0)
+    # Missing values summary
+    print("\nMissing Values")
 
-# Remove rows where amount is NULL
-sales_df = sales_df.dropna(subset=["amount"])
+    print(sales_df.isnull().sum())
 
-print("Missing values handled successfully.")
+    # Fill missing quantity
+    sales_df["quantity"] = sales_df["quantity"].fillna(0)
 
-print(f"\nCleaned Dataset Shape : {sales_df.shape}")
+    # Drop missing amount
+    sales_df = sales_df.dropna(subset=["amount"])
+
+    # Convert datatypes
+    sales_df["sale_date"] = pd.to_datetime(
+        sales_df["sale_date"],
+        errors="coerce"
+    )
+
+    sales_df["quantity"] = sales_df["quantity"].astype(int)
+
+    sales_df["amount"] = sales_df["amount"].astype(float)
+
+    print("\nCleaning Completed Successfully.")
+
+    print(f"Final Shape : {sales_df.shape}")
+
+    print("\nData Types\n")
+
+    print(sales_df.dtypes)
+
+    return sales_df
+
 
 # ==========================================================
-# Data Type Conversion
+# Data Transformation
 # ==========================================================
 
-print("\n" + "=" * 60)
-print("DATA TYPE CONVERSION")
-print("=" * 60)
+def merge_data(sales_df, stores_df, products_df):
 
-# Convert sale_date to datetime
-sales_df["sale_date"] = pd.to_datetime(
-    sales_df["sale_date"],
-    errors="coerce"
-)
+    print("\n" + "=" * 60)
+    print("DATA TRANSFORMATION")
+    print("=" * 60)
 
-# Convert amount to float
-sales_df["amount"] = sales_df["amount"].astype(float)
+    # Merge Sales + Stores
 
-# Convert quantity to integer
-sales_df["quantity"] = sales_df["quantity"].astype(int)
+    sales_store_df = pd.merge(
+        sales_df,
+        stores_df,
+        on="store_id",
+        how="left"
+    )
 
-print("Data types converted successfully.")
+    print("\nSales + Stores Merge Successful")
 
-print("\nCurrent Data Types\n")
+    print(f"Shape : {sales_store_df.shape}")
 
-print(sales_df.dtypes)
+    # Merge Products
 
-print("\n" + "=" * 60)
-print("TASK 1 & TASK 2 COMPLETED SUCCESSFULLY")
-print("=" * 60)
+    merged_df = pd.merge(
+        sales_store_df,
+        products_df,
+        on="product_id",
+        how="left"
+    )
+
+    print("\nProducts Merge Successful")
+
+    print(f"Final Shape : {merged_df.shape}")
+
+    print("\nFirst 5 Rows\n")
+
+    print(merged_df.head())
+
+    return merged_df
+
+
+# ==========================================================
+# Total Revenue Calculation
+# ==========================================================
+
+def calculate_total_revenue(merged_df):
+
+    print("\n" + "=" * 60)
+    print("TOTAL REVENUE")
+    print("=" * 60)
+
+    merged_df["total_revenue"] = (
+        merged_df["quantity"] *
+        merged_df["price"]
+    )
+
+    print("\nTotal Revenue Column Added Successfully\n")
+
+    print(merged_df.head())
+
+    revenue = merged_df["total_revenue"]
+
+    print("\nRevenue Statistics")
+
+    print(f"Average Revenue : {np.mean(revenue):.2f}")
+    print(f"Maximum Revenue : {np.max(revenue):.2f}")
+    print(f"Minimum Revenue : {np.min(revenue):.2f}")
+
+    return merged_df
+
+
+# ==========================================================
+# City Wise Revenue
+# ==========================================================
+
+def city_wise_revenue(merged_df):
+
+    print("\n" + "=" * 60)
+    print("CITY WISE REVENUE")
+    print("=" * 60)
+
+    city_revenue = (
+        merged_df
+        .groupby("city", as_index=False)["total_revenue"]
+        .sum()
+        .sort_values(
+            by="total_revenue",
+            ascending=False
+        )
+    )
+
+    print(city_revenue)
+
+    return city_revenue
+
+
+# ==========================================================
+# Main Function
+# ==========================================================
+
+def main():
+
+    sales_df, products_df, stores_df = load_data()
+
+    sales_df = clean_data(sales_df)
+
+    merged_df = merge_data(
+        sales_df,
+        stores_df,
+        products_df
+    )
+
+    merged_df = calculate_total_revenue(
+        merged_df
+    )
+
+    city_wise_revenue(
+        merged_df
+    )
+
+    print("\n" + "=" * 60)
+    print("TASK 1, TASK 2 & TASK 3 COMPLETED SUCCESSFULLY")
+    print("=" * 60)
+
+
+# ==========================================================
+# Program Entry Point
+# ==========================================================
+
+if __name__ == "__main__":
+    main()
