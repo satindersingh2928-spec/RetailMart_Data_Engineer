@@ -1,0 +1,31 @@
+product_id,product_name,category,price
+P101,Laptop,Electronics,55000
+P102,Mouse,Electronics,800
+P103,Keyboard,Electronics,1500
+P104,Headphones,Electronics,2500
+P105,Monitor,Electronics,12000
+P106,Printer,Electronics,9000
+P107,Office Chair,Furniture,4500
+P108,Desk,Furniture,7000
+P109,Bookshelf,Furniture,6500
+P110,Notebook,Stationery,80
+P111,Pen,Stationery,20
+P112,Marker,Stationery,50
+P113,Water Bottle,Accessories,350
+P114,Backpack,Accessories,1800
+P115,USB Cable,Accessories,300
+P116,Mixer,Home Appliances,3500
+P117,Iron,Home Appliances,1800
+P118,Fan,Home Appliances,2500
+P119,Rice Bag,Grocery,1200
+P120,Sugar,Grocery,50
+P121,Tea,Grocery,400
+P122,T-Shirt,Clothing,700
+P123,Jeans,Clothing,1800
+P124,Jacket,Clothing,3200
+P125,Football,Sports,900
+P126,Cricket Bat,Sports,2500
+P127,Yoga Mat,Sports,1200
+P128,Toy Car,Toys,600
+P129,Puzzle,Toys,450
+P130,Building Blocks,Toys,900
